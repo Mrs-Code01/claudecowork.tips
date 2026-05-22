@@ -1,3 +1,4 @@
+import { useForm, ValidationError } from "@formspree/react";
 import { useState } from "react";
 
 const css = `
@@ -318,7 +319,7 @@ html, body { height: 100%; background: var(--darker); }
   border: 1.5px solid rgba(255,255,255,0.09);
   border-radius: 12px;
   padding: 13px 16px;
-  font-size: 16px; /* 16px prevents iOS zoom */
+  font-size: 16px;
   font-family: 'Plus Jakarta Sans', sans-serif;
   color: var(--text); outline: none;
   transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
@@ -506,9 +507,8 @@ html, body { height: 100%; background: var(--darker); }
 export default function App() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
+  const [localErrors, setLocalErrors] = useState({});
+  const [state, handleFsSubmit] = useForm("mdajgvqj");
 
   const validate = () => {
     const e = {};
@@ -523,16 +523,16 @@ export default function App() {
     ev.preventDefault();
     const e = validate();
     if (Object.keys(e).length) {
-      setErrors(e);
+      setLocalErrors(e);
       return;
     }
-    setErrors({});
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setDone(true);
-    }, 1500);
+    setLocalErrors({});
+    handleFsSubmit(ev);
   };
+
+  const errors = localErrors;
+  const done = state.succeeded;
+  // ── END OF CHANGE ──
 
   const firstName = name.trim().split(" ")[0];
 
@@ -674,10 +674,11 @@ export default function App() {
                         type="text"
                         placeholder="e.g. Jordan Smith"
                         value={name}
+                        name="name"
                         className={errors.name ? "err" : ""}
                         onChange={(ev) => {
                           setName(ev.target.value);
-                          setErrors((p) => ({ ...p, name: "" }));
+                          setLocalErrors((p) => ({ ...p, name: "" }));
                         }}
                       />
                       {errors.name && (
@@ -692,10 +693,11 @@ export default function App() {
                         type="email"
                         placeholder="you@example.com"
                         value={email}
+                        name="email"
                         className={errors.email ? "err" : ""}
                         onChange={(ev) => {
                           setEmail(ev.target.value);
-                          setErrors((p) => ({ ...p, email: "" }));
+                          setLocalErrors((p) => ({ ...p, email: "" }));
                         }}
                       />
                       {errors.email && (
@@ -706,12 +708,12 @@ export default function App() {
                     <button
                       className="submit-btn"
                       type="submit"
-                      disabled={loading}
+                      disabled={state.submitting}
                     >
                       <span className="submit-icon">
-                        {loading ? "⏳" : "⚡"}
+                        {state.submitting ? "⏳" : "⚡"}
                       </span>
-                      {loading
+                      {state.submitting
                         ? "Signing you up…"
                         : "Send Me The Claude Cowork Tips — Free"}
                     </button>
